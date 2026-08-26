@@ -3,12 +3,25 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
+
+
+class LLMProvider(Protocol):
+    def complete_text(self, system: str, user: str, *, temperature: float = 0.2) -> str: ...
+
+    def complete_json(
+        self,
+        model_type: type[ModelT],
+        system: str,
+        user: str,
+        *,
+        temperature: float = 0.2,
+    ) -> ModelT: ...
 
 
 class ProviderError(RuntimeError):

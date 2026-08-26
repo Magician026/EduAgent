@@ -101,6 +101,30 @@ def test_document_overview_retrieval_fills_the_per_document_cap():
     assert len(results) == 32
 
 
+def test_document_overview_retrieval_ignores_chapter_mentions_in_body_text():
+    class FakeOverviewVectorStore:
+        def all_chunks(self):
+            return [
+                DocumentChunk(
+                    document_name="book.pdf",
+                    document_hash="hash",
+                    page=page,
+                    chunk_id=f"chunk-{page}",
+                    text="This chapter explains a concept in the book.",
+                )
+                for page in range(1, 101)
+            ]
+
+    retriever = Retriever(
+        embedding_provider=FakeEmbeddings(),
+        vector_store=FakeOverviewVectorStore(),
+    )
+
+    results = retriever.retrieve_document_overview()
+
+    assert max(result.chunk.page for result in results) == 100
+
+
 def test_retriever_returns_metadata_and_excerpt():
     retriever = Retriever(
         embedding_provider=FakeEmbeddings(),

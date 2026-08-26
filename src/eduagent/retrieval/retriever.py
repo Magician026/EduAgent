@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 
 from eduagent.models import DocumentChunk, RetrievedChunk
 from eduagent.retrieval.embeddings import EmbeddingProvider
 
 CONTENTS_SIGNALS = ("contents", "table of contents", "目录", "目次")
-CHAPTER_SIGNALS = ("chapter", "chapter summary", "章节", "本章小结", "总结")
+CHAPTER_HEADING_PATTERN = re.compile(
+    r"^(?:chapter\s+(?:\d+|[ivxlcdm]+)\b|章节\s*[一二三四五六七八九十百千\d]+|第\s*[一二三四五六七八九十百千\d]+\s*章)",
+    re.IGNORECASE,
+)
+SUMMARY_HEADING_PATTERN = re.compile(
+    r"^(?:chapter\s+summary|summary|本章小结|小结|总结)(?:\s|$|[:：])",
+    re.IGNORECASE,
+)
 OVERVIEW_CHUNK_LIMIT = 32
 
 
@@ -45,18 +53,21 @@ class Retriever:
         selected: list[DocumentChunk] = []
         selected_ids: set[str] = set()
 
-        def add_matching(signals: tuple[str, ...]) -> None:
+        def add_matching(matches) -> None:
             for chunk in ordered_chunks:
                 if len(selected) == OVERVIEW_CHUNK_LIMIT:
                     return
-                if chunk.chunk_id not in selected_ids and any(
-                    signal in chunk.text.casefold() for signal in signals
-                ):
+                if chunk.chunk_id not in selected_ids and matches(chunk.text):
                     selected.append(chunk)
                     selected_ids.add(chunk.chunk_id)
 
-        add_matching(CONTENTS_SIGNALS)
-        add_matching(CHAPTER_SIGNALS)
+        add_matching(lambda text: any(signal in text.casefold() for signal in CONTENTS_SIGNALS))
+        add_matching(
+            lambda text: bool(
+                CHAPTER_HEADING_PATTERN.match(text.lstrip())
+                or SUMMARY_HEADING_PATTERN.match(text.lstrip())
+            )
+        )
 
         remaining_chunks = [
             chunk for chunk in ordered_chunks if chunk.chunk_id not in selected_ids

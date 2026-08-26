@@ -39,6 +39,7 @@ class FakeVectorStore:
         "帮我总结一下这个 PDF",
         "Summarize this PDF",
         "Give me an overview of this document",
+        "What is this document about?",
     ],
 )
 def test_document_overview_intent_detects_broad_document_questions(query):
@@ -53,6 +54,9 @@ def test_document_overview_intent_detects_broad_document_questions(query):
         "第三章讲了什么？",
         "Summarize XGBoost",
         "What does chapter 3 cover?",
+        "介绍一下本文中的 XGBoost",
+        "总结一下这篇文章的实验部分",
+        "Summarize this document's section on XGBoost",
     ],
 )
 def test_document_overview_intent_keeps_focused_questions_on_normal_path(query):
@@ -200,6 +204,32 @@ def test_chroma_vector_store_returns_metadata(tmp_path):
     assert results[0].chunk.document_name == "lecture_05.pdf"
     assert results[0].chunk.page == 12
     assert results[0].chunk.text.startswith("MAP classification")
+
+
+def test_chroma_vector_store_all_chunks_reconstructs_metadata_and_text(tmp_path):
+    store = ChromaVectorStore(tmp_path / "chroma", collection_name="all_chunks_collection")
+    chunks = [
+        DocumentChunk(
+            document_name="book.pdf",
+            document_hash="hash",
+            page=2,
+            chunk_id="chunk-2",
+            text="Second page excerpt.",
+        ),
+        DocumentChunk(
+            document_name="book.pdf",
+            document_hash="hash",
+            page=11,
+            chunk_id="chunk-11",
+            text="Eleventh page excerpt.",
+        ),
+    ]
+
+    store.add(chunks, [[1.0, 0.0], [0.0, 1.0]])
+
+    reconstructed = {chunk.chunk_id: chunk for chunk in store.all_chunks()}
+
+    assert reconstructed == {chunk.chunk_id: chunk for chunk in chunks}
 
 
 def test_missing_key_raises_safe_provider_error():

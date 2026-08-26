@@ -3,6 +3,7 @@ import pytest
 from eduagent.llm.provider import OpenAICompatibleProvider, ProviderConfigurationError
 from eduagent.models import DocumentChunk, RetrievedChunk
 from eduagent.retrieval.embeddings import OpenAICompatibleEmbeddingProvider
+from eduagent.retrieval.query_intent import is_document_overview_query
 from eduagent.retrieval.retriever import Retriever
 from eduagent.retrieval.vector_store import ChromaVectorStore
 
@@ -29,6 +30,75 @@ class FakeVectorStore:
 
     def search(self, query_embedding, k):
         return self.results[:k]
+
+
+def test_document_overview_intent_detects_broad_question():
+    assert is_document_overview_query("帮我介绍一下这个pdf讲了什么内容") is True
+
+
+def test_document_overview_intent_keeps_focused_question_on_normal_path():
+    assert is_document_overview_query("什么是 XGBoost？") is False
+
+
+def test_document_overview_retrieval_spreads_evidence_across_document():
+    def chunk(page, text):
+        return DocumentChunk(
+            document_name="book.pdf",
+            document_hash="hash",
+            page=page,
+            chunk_id=f"chunk-{page}",
+            text=text,
+        )
+
+    class FakeOverviewVectorStore:
+        def __init__(self, chunks):
+            self.chunks = chunks
+
+        def all_chunks(self):
+            return self.chunks
+
+    retriever = Retriever(
+        embedding_provider=FakeEmbeddings(),
+        vector_store=FakeOverviewVectorStore(
+            chunks=[
+                chunk(page=1, text="Book title and author"),
+                chunk(page=10, text="Contents 1 Introduction 5 Analytic Learning 89"),
+                chunk(page=19, text="Chapter 1 Introduction Pattern Recognition"),
+                chunk(page=89, text="Chapter 5 Analytic Learning"),
+                chunk(page=161, text="Chapter 6 Penalized Learning"),
+                chunk(page=266, text="Chapter 9 Ensemble Learning"),
+                chunk(page=400, text="Appendix references"),
+            ]
+        ),
+    )
+    results = retriever.retrieve_document_overview()
+
+    pages = {result.chunk.page for result in results}
+    assert {10, 19, 89, 161, 266}.issubset(pages)
+
+
+def test_document_overview_retrieval_fills_the_per_document_cap():
+    class FakeOverviewVectorStore:
+        def all_chunks(self):
+            return [
+                DocumentChunk(
+                    document_name="book.pdf",
+                    document_hash="hash",
+                    page=page,
+                    chunk_id=f"chunk-{page}",
+                    text="Chapter summary" if page <= 10 else f"Page {page}",
+                )
+                for page in range(1, 41)
+            ]
+
+    retriever = Retriever(
+        embedding_provider=FakeEmbeddings(),
+        vector_store=FakeOverviewVectorStore(),
+    )
+
+    results = retriever.retrieve_document_overview()
+
+    assert len(results) == 32
 
 
 def test_retriever_returns_metadata_and_excerpt():

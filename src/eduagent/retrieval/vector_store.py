@@ -50,6 +50,29 @@ class ChromaVectorStore:
             ],
         )
 
+    def all_chunks(self) -> list[DocumentChunk]:
+        """Return every stored chunk with its persisted document metadata."""
+
+        if self.count() == 0:
+            return []
+        result = self.collection.get(include=["documents", "metadatas"])
+        documents = result.get("documents") or []
+        metadatas = result.get("metadatas") or []
+        chunks: list[DocumentChunk] = []
+        for document, metadata in zip(documents, metadatas, strict=False):
+            if not metadata:
+                continue
+            chunks.append(
+                DocumentChunk(
+                    document_name=str(metadata["document_name"]),
+                    document_hash=str(metadata["document_hash"]),
+                    page=int(metadata["page"]),
+                    chunk_id=str(metadata["chunk_id"]),
+                    text=str(document),
+                )
+            )
+        return chunks
+
     def search(self, query_embedding: Sequence[float], k: int) -> list[RetrievedChunk]:
         """Return up to ``k`` chunks with cosine similarity scores."""
 

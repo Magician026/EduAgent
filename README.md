@@ -32,6 +32,9 @@ The core experience is simple:
 
 - **Ask questions about your own course** instead of searching through disconnected general answers.
 - **Inspect the evidence** behind an answer with the source file and page number.
+- **Get the right retrieval path for the question:** broad document questions use
+  structure-aware overview context distributed across the PDF, while focused questions use
+  the configured Top-K retrieval.
 - **Change the explanation level** between Beginner, Standard, and Advanced.
 - **Generate targeted practice** as multiple-choice or short-answer questions.
 - **See why an answer needs improvement** through missing key points and possible misconceptions.
@@ -211,6 +214,8 @@ Runtime data is stored under `data/runtime/` and ignored by Git. The current MVP
 - Automated evaluation is formative feedback, not official grading
 - Mastery is a transparent heuristic, not validated knowledge tracing
 - Answer quality depends on course text quality, retrieval, provider compatibility, and model configuration
+- Page citations point to supporting evidence; this MVP does not replace reading the source
+  material or expert judgment.
 
 ## License
 

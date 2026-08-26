@@ -65,7 +65,17 @@ class FakeRetriever:
                     text="Contents: MAP classification and posterior probability.",
                 ),
                 similarity=0.0,
-            )
+            ),
+            RetrievedChunk(
+                chunk=DocumentChunk(
+                    document_name="lecture_05.pdf",
+                    document_hash="hash",
+                    page=89,
+                    chunk_id="chapter-5",
+                    text="Chapter 5: Analytic learning methods.",
+                ),
+                similarity=0.0,
+            ),
         ]
         self.focused_calls = 0
         self.overview_calls = 0
@@ -134,6 +144,29 @@ def test_tutor_routes_broad_question_to_document_overview():
     assert "Explain the document's purpose" in system
     assert "Page 10" in user
     assert "Contents: MAP classification and posterior probability." in user
+
+
+def test_tutor_overview_preserves_distributed_sources_for_renderer():
+    retriever = FakeRetriever()
+    provider = FakeProvider()
+    tutor = TutorAgent(provider, retriever, TeachingPolicy())
+
+    response = tutor.answer_question(
+        "What does this document cover?",
+        ExplanationLevel.STANDARD,
+        [],
+    )
+
+    assert retriever.overview_calls == 1
+    assert retriever.focused_calls == 0
+    system, user = provider.complete_text_calls[0]
+    assert "Explain the document's purpose" in system
+    assert "Contents: MAP classification and posterior probability." in user
+    assert "Chapter 5: Analytic learning methods." in user
+    assert [(source.page, source.chunk_id) for source in response.sources] == [
+        (10, "contents-1"),
+        (89, "chapter-5"),
+    ]
 
 
 def test_quiz_generator_rejects_unknown_source_ids():

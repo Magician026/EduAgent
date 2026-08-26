@@ -15,6 +15,7 @@ from eduagent.models import (
     TeachingDecision,
     TutorResponse,
 )
+from eduagent.retrieval.query_intent import is_document_overview_query
 from eduagent.tutor.answer_evaluator import AnswerEvaluator
 from eduagent.tutor.quiz_generator import QuizGenerator
 from eduagent.tutor.teaching_policy import TeachingPolicy
@@ -45,7 +46,12 @@ class TutorAgent:
         level: ExplanationLevel,
         profile: Sequence,
     ) -> TutorResponse:
-        results = self.retriever.retrieve(question)
+        is_overview = is_document_overview_query(question)
+        results = (
+            self.retriever.retrieve_document_overview()
+            if is_overview
+            else self.retriever.retrieve(question)
+        )
         if not results:
             return TutorResponse(
                 answer=(
@@ -53,15 +59,29 @@ class TutorAgent:
                     "Please upload and index the relevant lecture notes."
                 )
             )
-        system = (
-            "You are EduAgent, a course-grounded university tutor. Use the supplied context "
-            "as evidence, explain at the requested level, do not invent citations, and say "
-            "when the context is insufficient."
-        )
-        user = (
-            f"Explanation level: {level.value}\nStudent question: {question}\n"
-            f"Retrieved course context:\n{self.retriever.format_context(results)}"
-        )
+        if is_overview:
+            system = (
+                "You are EduAgent, a course-grounded university tutor. Produce a "
+                "document-level overview using only the supplied context as evidence. "
+                "Explain the document's purpose, its table of contents or chapter structure "
+                "when supported, and its major topics or methods. Ground statements in the "
+                "provided pages, do not invent citations, and explicitly state uncertainty "
+                "when the outline or structural evidence is unavailable."
+            )
+            user = (
+                f"Explanation level: {level.value}\nStudent question: {question}\n"
+                f"Document overview context:\n{self.retriever.format_context(results)}"
+            )
+        else:
+            system = (
+                "You are EduAgent, a course-grounded university tutor. Use the supplied context "
+                "as evidence, explain at the requested level, do not invent citations, and say "
+                "when the context is insufficient."
+            )
+            user = (
+                f"Explanation level: {level.value}\nStudent question: {question}\n"
+                f"Retrieved course context:\n{self.retriever.format_context(results)}"
+            )
         answer = self.provider.complete_text(system, user, temperature=0.2)
         sources = [
             SourceReference(

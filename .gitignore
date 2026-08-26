@@ -8,6 +8,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.eggs/
+*.egg-info/
 .DS_Store
 data/runtime/*
 !data/runtime/.gitkeep

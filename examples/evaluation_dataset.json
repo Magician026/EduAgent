@@ -1,0 +1,20 @@
+[
+  {
+    "question": "What does MAP classification choose?",
+    "expected_answer": "The class with the highest posterior probability.",
+    "expected_source": "sample_course.pdf",
+    "expected_page": 2
+  },
+  {
+    "question": "What does Bayes Rule combine?",
+    "expected_answer": "Likelihood, prior belief, and evidence.",
+    "expected_source": "sample_course.pdf",
+    "expected_page": 2
+  },
+  {
+    "question": "What is maximum likelihood estimation?",
+    "expected_answer": "Choosing the parameter that makes observed data most likely.",
+    "expected_source": "sample_course.pdf",
+    "expected_page": 3
+  }
+]

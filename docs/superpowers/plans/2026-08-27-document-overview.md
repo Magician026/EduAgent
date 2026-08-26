@@ -191,12 +191,12 @@ git diff --check
 
 - [ ] **Step 4: Run the real PDF regression**
 
-Use the already indexed PDF at `/Users/magician/Desktop/MA ZIxian_G2601604D/课程/6406/Analytic Learning Methods for Pattern Recognition.pdf` and verify that the overview retrieval pages include the contents and later chapter ranges, then verify the Streamlit page still renders the indexed file.
+Use an already indexed local PDF (for example, `<path-to-indexed-pdf>`) and verify that the overview retrieval pages include the contents and later chapter ranges, then verify the Streamlit page still renders the indexed file.
 
 - [ ] **Step 5: Commit and sync**
 
 ```bash
-git add tests/test_pages.py README.md README.zh-CN.md
+git add tests/test_tutor.py README.md README.zh-CN.md
 git commit -m "test: document whole-file overview behavior"
 git push origin master
 ```

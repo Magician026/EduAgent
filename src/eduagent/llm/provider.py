@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any, Protocol, TypeVar
 
 from openai import OpenAI
@@ -41,13 +40,12 @@ class StructuredOutputError(ProviderError):
 
 
 class OpenAICompatibleProvider:
-    """Synchronous provider adapter for OpenAI-compatible chat and embeddings APIs."""
+    """Synchronous provider adapter for OpenAI-compatible chat APIs."""
 
     def __init__(
         self,
         api_key: str | None,
         model: str,
-        embedding_model: str,
         base_url: str | None = None,
         client: Any | None = None,
     ) -> None:
@@ -55,10 +53,7 @@ class OpenAICompatibleProvider:
             raise ProviderConfigurationError("OPENAI_API_KEY is not configured.")
         if not model:
             raise ProviderConfigurationError("OPENAI_MODEL is not configured.")
-        if not embedding_model:
-            raise ProviderConfigurationError("OPENAI_EMBEDDING_MODEL is not configured.")
         self.model = model
-        self.embedding_model = embedding_model
         self.client = client or OpenAI(api_key=api_key, base_url=base_url or None)
 
     def _chat(self, system: str, user: str, *, temperature: float, json_mode: bool = False) -> str:
@@ -122,19 +117,3 @@ class OpenAICompatibleProvider:
                 ) from repair_error
             finally:
                 del first_error
-
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        """Create embeddings for a non-empty sequence of texts."""
-
-        if not texts:
-            raise ValueError("At least one text is required for embedding.")
-        try:
-            response = self.client.embeddings.create(model=self.embedding_model, input=list(texts))
-            vectors = [list(item.embedding) for item in response.data]
-        except Exception as exc:
-            raise ProviderRequestError("The embedding request failed. Please retry.") from exc
-        if len(vectors) != len(texts):
-            raise ProviderRequestError(
-                "The embedding provider returned an unexpected vector count."
-            )
-        return vectors

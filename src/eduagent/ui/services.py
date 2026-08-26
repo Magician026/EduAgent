@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from eduagent.config import Settings
 from eduagent.document_processing.ingestion import IngestionService
 from eduagent.llm.provider import LLMProvider, OpenAICompatibleProvider
-from eduagent.retrieval.embeddings import EmbeddingProvider, OpenAIEmbeddingProvider
+from eduagent.retrieval.embeddings import EmbeddingProvider, OpenAICompatibleEmbeddingProvider
 from eduagent.retrieval.retriever import Retriever
 from eduagent.retrieval.vector_store import ChromaVectorStore
 from eduagent.student.repository import StudentRepository
@@ -57,12 +57,15 @@ def build_services(settings: Settings) -> AppServices:
         )
 
     provider = OpenAICompatibleProvider(
-        api_key=settings.openai_api_key,
-        base_url=settings.openai_base_url,
-        model=settings.openai_model,
-        embedding_model=settings.embedding_model,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
+        model=settings.llm_model,
     )
-    embedding_provider = OpenAIEmbeddingProvider(provider)
+    embedding_provider = OpenAICompatibleEmbeddingProvider(
+        api_key=settings.embedding_api_key,
+        base_url=settings.embedding_base_url,
+        model=settings.embedding_model,
+    )
     retriever = Retriever(embedding_provider, vector_store, top_k=settings.retrieval_top_k)
     ingestion = IngestionService(embedding_provider, vector_store, repository)
     tutor = TutorAgent(provider, retriever, policy)

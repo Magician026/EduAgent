@@ -30,7 +30,7 @@ The production vector layer is Chroma with a local persistent client and cosine 
 
 ## 4. Provider abstraction
 
-`OpenAICompatibleProvider` wraps chat completions and embeddings. It accepts `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, and `OPENAI_EMBEDDING_MODEL`. The provider supports plain text and Pydantic-validated JSON. If JSON validation fails, it makes one bounded repair request. It does not log prompts, retrieved excerpts, or student answers.
+`OpenAICompatibleProvider` wraps chat completions, while `OpenAICompatibleEmbeddingProvider` wraps embeddings as a separate client. The application accepts provider-neutral `EDUAGENT_LLM_*` and `EDUAGENT_EMBEDDING_*` settings, so a DeepSeek or Kimi chat model can be paired with an independent embedding service. The legacy `OPENAI_*` settings remain supported for a single OpenAI-compatible provider. The chat provider supports plain text and Pydantic-validated JSON. If JSON validation fails, it makes one bounded repair request. It does not log prompts, retrieved excerpts, or student answers.
 
 Tests use fake providers and fake retrievers. The app does not silently display fake answers when credentials are missing.
 

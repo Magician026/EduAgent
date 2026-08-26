@@ -2,6 +2,7 @@ import pytest
 
 from eduagent.llm.provider import OpenAICompatibleProvider, ProviderConfigurationError
 from eduagent.models import DocumentChunk, RetrievedChunk
+from eduagent.retrieval.embeddings import OpenAICompatibleEmbeddingProvider
 from eduagent.retrieval.retriever import Retriever
 from eduagent.retrieval.vector_store import ChromaVectorStore
 
@@ -64,4 +65,34 @@ def test_chroma_vector_store_returns_metadata(tmp_path):
 
 def test_missing_key_raises_safe_provider_error():
     with pytest.raises(ProviderConfigurationError, match="OPENAI_API_KEY"):
-        OpenAICompatibleProvider(api_key=None, model="model", embedding_model="embed")
+        OpenAICompatibleProvider(api_key=None, model="model")
+
+
+def test_embedding_provider_uses_its_own_model_and_client():
+    class FakeEmbeddingClient:
+        class embeddings:
+            @staticmethod
+            def create(**kwargs):
+                assert kwargs == {"model": "text-embedding-3-small", "input": ["hello"]}
+                return type(
+                    "Response",
+                    (),
+                    {"data": [type("Item", (), {"embedding": [0.1, 0.2]})()]},
+                )()
+
+    provider = OpenAICompatibleEmbeddingProvider(
+        api_key="embedding-key",
+        base_url="https://api.openai.com/v1",
+        model="text-embedding-3-small",
+        client=FakeEmbeddingClient(),
+    )
+
+    assert provider.embed(["hello"]) == [[0.1, 0.2]]
+
+
+def test_missing_embedding_key_raises_safe_provider_error():
+    with pytest.raises(ProviderConfigurationError, match="Embedding API key"):
+        OpenAICompatibleEmbeddingProvider(
+            api_key=None,
+            model="text-embedding-3-small",
+        )

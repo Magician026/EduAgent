@@ -28,7 +28,8 @@ def _model_ready_or_explain(services: AppServices) -> bool:
         return True
     st.warning(
         "模型功能尚未启用。请在 `.env` 或 Streamlit secrets 中设置 "
-        "`OPENAI_API_KEY` 和 `OPENAI_MODEL`。"
+        "`EDUAGENT_LLM_API_KEY`、`EDUAGENT_LLM_MODEL`，以及可用的 "
+        "`EDUAGENT_EMBEDDING_API_KEY`、`EDUAGENT_EMBEDDING_MODEL`。"
     )
     return False
 

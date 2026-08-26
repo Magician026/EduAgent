@@ -19,6 +19,15 @@ if str(SRC_DIR) not in sys.path:
 import streamlit as st
 
 from eduagent.config import Settings
+from eduagent.ui.pages import (
+    render_about,
+    render_course_materials,
+    render_learn,
+    render_practice,
+    render_progress,
+    render_sidebar,
+)
+from eduagent.ui.services import AppServices, build_services
 
 
 def _streamlit_secrets() -> dict[str, str]:
@@ -30,29 +39,30 @@ def _streamlit_secrets() -> dict[str, str]:
         return {}
 
 
+@st.cache_resource(show_spinner=False)
+def _get_services(settings: Settings) -> AppServices:
+    return build_services(settings)
+
+
 def main() -> None:
-    """Render the initial application shell."""
+    """Render the complete EduAgent Streamlit application."""
 
     st.set_page_config(page_title="EduAgent", page_icon="🎓", layout="wide")
     settings = Settings.from_sources(secrets=_streamlit_secrets())
     settings.ensure_runtime_directories()
 
-    st.title("🎓 EduAgent")
-    st.caption("An Agentic AI Tutor for Personalized Course Learning")
-
-    if not settings.llm_configured:
-        st.warning("模型服务尚未配置。请添加 OPENAI_API_KEY 后重新运行应用。")
-        st.markdown(
-            """
-            EduAgent will turn course PDFs into a searchable learning workspace,
-            then provide grounded explanations, quizzes, formative feedback, and
-            a transparent next-teaching-action recommendation.
-            """
-        )
-        st.code("cp .env.example .env\n# Edit .env and set OPENAI_API_KEY\nstreamlit run app.py")
-        return
-
-    st.success("模型配置已就绪。课程材料和学习页面将在后续里程碑启用。")
+    services = _get_services(settings)
+    page, level = render_sidebar(services)
+    if page == "🏠 Learn":
+        render_learn(services, level)
+    elif page == "📚 Course Materials":
+        render_course_materials(services)
+    elif page == "🧠 Practice":
+        render_practice(services)
+    elif page == "📊 Progress":
+        render_progress(services)
+    else:
+        render_about()
 
 
 if __name__ == "__main__":

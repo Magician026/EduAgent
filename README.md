@@ -1,106 +1,113 @@
 # EduAgent
 
-**An Agentic AI Tutor for Personalized Course Learning**
+**把一份课程 PDF，变成一位真正会跟进你学习进度的 AI 导师。**
 
-EduAgent is a portfolio MVP that turns lecture PDFs into a course-grounded learning loop. It combines RAG, structured LLM outputs, a lightweight learner profile, and a deterministic teaching policy.
+大多数 PDF 问答工具只能在你提问时给出一个答案。EduAgent 更进一步：它理解你的课程材料，记住你在哪些概念上反复出错，并在解释、举例、练习和补强之间做出下一步教学选择。
 
-## Why EduAgent?
+你不需要先整理知识库，也不需要为每个章节手动制作题目。上传课件，开始提问；当你准备好检验自己时，让 EduAgent 根据课程内容生成练习，并用形成性反馈告诉你“哪里答对了、哪里还不够、下一步应该学什么”。
 
-An ordinary PDF chatbot usually performs:
+## 你可以用 EduAgent 做什么？
+
+- **问懂课程内容**：针对上传的讲义提问，获得基于原文的解释，而不是脱离课程上下文的泛泛回答。
+- **找到答案依据**：每个回答都可以展开查看对应的文件名和页码，方便回到课件复习。
+- **选择适合自己的讲解方式**：在 Beginner、Standard、Advanced 三种解释层级之间切换。
+- **随时生成针对性练习**：围绕某个概念生成选择题或简答题，难度可以逐步提升。
+- **获得真正有用的反馈**：系统识别答案中的缺失要点和可能的误解，而不只是告诉你“对”或“错”。
+- **看到自己的学习状态**：记录练习次数、平均得分、概念掌握度和薄弱概念，让学习从“感觉学过了”变成可观察的进步。
+
+## 一次完整的学习体验
 
 ```text
-question → retrieval → answer
+上传课程 PDF
+      ↓
+EduAgent 按页解析并建立课程知识库
+      ↓
+你提问，获得带来源依据的解释
+      ↓
+围绕薄弱概念生成练习
+      ↓
+提交答案，获得缺失要点和误解反馈
+      ↓
+更新学习画像，决定下一步解释、举例、补强或提高难度
 ```
 
-EduAgent adds a learning state and a next-action loop:
+这意味着 EduAgent 不是“把 ChatGPT 套在 PDF 上”，而是一条围绕课程内容持续运转的学习闭环：**理解 → 练习 → 反馈 → 调整**。
 
-```text
-student state + course evidence + current response
-                     ↓
-              Tutor Agent
-                     ↓
-       explanation / example / quiz / remediation
-                     ↓
-              formative feedback
-                     ↓
-              mastery update
-                     ↓
-            next teaching action
-```
+## 当前完成度：MVP 已完成，可直接使用
 
-The MVP does not claim that its heuristic is validated knowledge tracing or that it has demonstrated learning gains.
+EduAgent 的核心 MVP 已经开发完成，并已在本地完成测试和页面验证。当前版本已经覆盖从课程材料导入到学习进度查看的完整闭环：
 
-## Features
+- 课程 PDF 上传、按页解析、分块和重复文件检测
+- 基于课程内容的检索增强问答（RAG）
+- 带文件名和页码的来源引用
+- 解释层级选择
+- 选择题与简答题生成
+- 结构化形成性评价与学习反馈
+- 概念掌握度、薄弱概念和学习记录
+- 基于学习状态的透明教学策略
+- Learn、Course Materials、Practice、Progress 和 About 五个页面
 
-- Page-aware PDF ingestion with duplicate detection
-- Course-grounded retrieval using Chroma
-- Source citations such as `lecture_05.pdf — Page 12`
-- Beginner, Standard, and Advanced explanations
-- Multiple-choice and short-answer quiz generation
-- Structured automated formative feedback
-- Concept mastery and weak-concept detection
-- Deterministic adaptive teaching policy
-- Streamlit learning, practice, progress, materials, and About pages
-- Technical retrieval evaluation with an offline demo mode
-- Streamlit Community Cloud deployment preparation
+需要明确的是：**“MVP 已完成”不等于“无需配置即可在线服务所有用户”。** 当前版本还需要你配置一个 OpenAI-compatible 模型服务，默认面向单个学习者在本地使用；它暂不包含账号系统、多人隔离、扫描 PDF OCR 和经过教育实验验证的学习增益结论。
 
-## Architecture
+## 现在就开始使用
 
-```mermaid
-flowchart TD
-    PDF[Course PDFs] --> Parser[PyMuPDF parser]
-    Parser --> Chunker[Page-aware chunker]
-    Chunker --> Embed[OpenAI-compatible embeddings]
-    Embed --> Chroma[(Local Chroma vector store)]
-    Student[Student] --> UI[Streamlit UI]
-    UI --> Tutor[Tutor Agent]
-    Tutor --> Retriever[Retriever]
-    Retriever --> Chroma
-    Tutor --> LLM[OpenAI-compatible LLM]
-    Tutor --> Policy[Deterministic teaching policy]
-    Quiz[Quiz answer] --> Eval[Structured formative evaluator]
-    Eval --> Profile[(SQLite learner profile)]
-    Policy --> Profile
-    Profile --> UI
-```
-
-## Quick start
-
-The implementation is currently on the `codex/eduagent-mvp` branch.
+### 1. 获取项目并安装依赖
 
 ```bash
 git clone https://github.com/Magician026/EduAgent.git
 cd EduAgent
-git checkout codex/eduagent-mvp
 uv venv --python 3.12 .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt -r requirements-dev.txt
 uv pip install -e .
+```
+
+如果你没有安装 `uv`，也可以使用 Python 3.11+ 创建虚拟环境并安装同样的依赖。
+
+### 2. 配置模型服务
+
+```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY and OPENAI_MODEL
+```
+
+编辑 `.env`，至少填写：
+
+```env
+OPENAI_API_KEY=你的模型服务密钥
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+如果使用其他 OpenAI-compatible 服务，再填写它的接口地址：
+
+```env
+OPENAI_BASE_URL=https://your-provider.example.com/v1
+```
+
+密钥只保存在本地 `.env` 或 Streamlit secrets 中，不要提交到 GitHub。
+
+### 3. 启动 EduAgent
+
+```bash
 streamlit run app.py
 ```
 
-Without an API key, the application still starts and shows configuration guidance, About content, local progress storage, and the materials shell. Real indexing, grounded answers, quizzes, and evaluation require a configured OpenAI-compatible provider.
+浏览器打开 Streamlit 显示的本地地址，通常是 `http://localhost:8501`。
 
-## Configuration
+### 4. 推荐的第一次使用方式
 
-```env
-OPENAI_API_KEY=
-OPENAI_BASE_URL=
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_EMBEDDING_MODEL=text-embedding-3-small
-EDUAGENT_DATA_DIR=data
-EDUAGENT_RETRIEVAL_TOP_K=5
-```
+1. 打开 **Course Materials**，上传一份课程讲义 PDF，点击 **Index selected PDFs**。
+2. 打开 **Learn**，询问一个具体问题，例如“请用 Beginner 方式解释这一章的核心概念”。
+3. 展开回答下方的来源卡片，检查答案对应的文件和页码。
+4. 打开 **Practice**，选择刚刚学习的概念并生成一道题。
+5. 提交答案，阅读缺失要点和可能误解。
+6. 打开 **Progress**，查看掌握度、薄弱概念和最近练习记录。
 
-`OPENAI_BASE_URL` is optional. Set it when using an OpenAI-compatible provider. Secrets are loaded from environment variables or Streamlit secrets and are never committed.
+建议第一次先使用仓库自带的示例课程，确认完整流程后，再上传自己的课程材料。
 
-Runtime Chroma files, SQLite data, and uploaded course materials belong under `data/runtime/` and are ignored by Git. The MVP intentionally uses a single local/demo student rather than collecting personal information.
+## 不配置 API Key 也可以做什么？
 
-## Demo content and technical evaluation
-
-The repository contains self-authored sample content:
+应用仍然可以启动，你可以查看产品页面和 About 页面；仓库还提供了不调用模型的离线技术演示：
 
 ```bash
 python examples/create_sample_pdf.py
@@ -108,64 +115,49 @@ PYTHONPATH=src python -m eduagent.evaluation.rag_evaluator \
   --dataset examples/evaluation_dataset.json
 ```
 
-The offline evaluator reports source hit rate, source recall, latency, and provider errors. Its default CLI uses a small lexical retriever over the self-authored sample PDF so it can run without an API key. This is a reproducible technical smoke evaluation, not a claim about production RAG quality or educational impact.
+这个演示用于检查文档解析、来源检索和延迟等技术链路，不代表真实生产环境的回答质量，也不代表已经证明学习效果。
 
-The production application uses provider embeddings and Chroma. A future evaluation can call `evaluate_dataset` with the real `Retriever` and a controlled answer function.
+## 接下来怎么推进？
 
-## Deployment: Streamlit Community Cloud
+推荐按下面的顺序使用和迭代：
 
-Deployment is prepared but has not been performed by this repository agent.
+### 现在：完成一次真实课程试用
 
-1. Create/select a Streamlit Community Cloud app from `Magician026/EduAgent`.
-2. Choose branch `codex/eduagent-mvp` until the branch is merged.
-3. Set the main file to `app.py`.
-4. Use Python 3.12 if the deployment UI exposes a Python version selector.
-5. Add these flat secrets in the app settings:
+配置模型服务，上传一门课程的讲义，完整走一遍“提问—练习—反馈—进度”流程，重点观察引用是否准确、题目是否贴合课程、反馈是否有帮助。
 
-```toml
-OPENAI_API_KEY = "your-key"
-OPENAI_BASE_URL = ""
-OPENAI_MODEL = "gpt-4o-mini"
-OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
-```
+### 下一步：从个人 MVP 变成稳定产品
 
-6. Deploy and perform the flow in `docs/demo.md`.
+- 增加多用户登录、数据隔离和更可靠的持久化存储
+- 支持多课程管理、课程章节和概念关系
+- 增加 OCR，覆盖扫描版课件
+- 优化检索、题目质量和模型调用成本
+- 增加部署环境与数据隐私保护策略
 
-The local filesystem on a hosted app may be ephemeral. Do not upload sensitive course or student data until appropriate privacy, retention, access-control, and institutional review requirements are addressed.
+### 再下一步：验证它是否真的帮助学习
 
-## Screenshots to take after deployment
+技术指标只能说明系统是否找到了相关内容，不能说明学习者是否真正学会。后续需要设计有前测、后测和对照条件的教育实验，单独验证 EduAgent 对学习效果的影响。
 
-- Course Materials page with an indexed sample PDF
-- Learn page showing a grounded answer and expanded source card
-- Practice page showing a quiz and formative feedback
-- Progress page showing mastery and weak concepts
-- About page showing architecture and limitations
+## 技术实现
 
-Do not add screenshots that imply measured learning gains or real student usage.
+EduAgent 使用 Streamlit 构建交互界面，使用 PyMuPDF 进行页面级 PDF 解析，使用 Chroma 保存课程检索向量，使用 SQLite 保存学习者画像和练习记录，并通过 OpenAI-compatible 接口调用大语言模型和嵌入模型。教学策略由透明、可解释的应用层策略控制，模型负责生成解释、题目和反馈。
 
-## Educational impact study design
+运行数据默认保存在 `data/runtime/`，不会被 Git 跟踪。当前 MVP 面向本地单用户使用，请不要直接上传包含敏感个人信息或受限制传播内容的材料。
 
-See [`docs/impact_study.md`](docs/impact_study.md). It is a future study design only; no participants, outcomes, or learning gains are claimed here.
+## 项目文档
 
-## Limitations
+- [产品演示流程](docs/demo.md)
+- [系统架构说明](docs/architecture.md)
+- [技术评估说明](docs/impact_study.md)
 
-- Single-student MVP without authentication or multi-user isolation
-- Local Chroma and SQLite persistence; hosted filesystem durability is not guaranteed
-- No OCR for scanned PDFs
-- Automated answer evaluation is formative feedback, not official grading
-- Mastery uses a transparent heuristic, not validated knowledge tracing
-- Retrieval and generation quality depend on PDF text quality and provider configuration
-- No real educational impact experiment has been conducted
+## 已知边界
 
-## Roadmap
+- 当前是单用户本地 MVP，不提供账号和多人隔离。
+- 本地 Chroma 和 SQLite 数据依赖运行环境；托管平台的本地磁盘不保证永久保存。
+- 暂不支持扫描版 PDF 的 OCR。
+- 自动评价用于形成性反馈，不应当替代正式考试评分。
+- 掌握度采用透明启发式方法，并非经过验证的知识追踪模型。
+- 回答质量取决于课件文本质量、检索结果和模型服务配置。
 
-- Validated knowledge tracing and calibration
-- Course concept/prerequisite graphs
-- Spaced repetition
-- Multi-course and multi-user support
-- Instructor analytics
-- Controlled learning-impact study
+## License
 
-## Interview preparation
-
-See [`docs/demo.md`](docs/demo.md) for the two-to-three-minute demo and interview questions. See [`docs/cv_material.md`](docs/cv_material.md) for truthful project bullets.
+本项目当前未单独声明开源许可证；如需公开分发或商用，请先补充许可证和第三方依赖合规说明。

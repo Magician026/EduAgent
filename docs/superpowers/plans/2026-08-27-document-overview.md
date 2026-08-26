@@ -83,7 +83,7 @@ def test_document_overview_retrieval_spreads_evidence_across_document():
     assert {10, 19, 89, 161, 266}.issubset(pages)
 ```
 
-Run: `pytest tests/test_retrieval.py -q`  
+Run: `pytest tests/test_retrieval.py -q`
 Expected: FAIL because overview intent and distributed retrieval do not exist.
 
 - [ ] **Step 2: Implement the smallest passing retrieval path**
@@ -96,7 +96,7 @@ document. Return overview chunks with neutral similarity scores.
 
 - [ ] **Step 3: Run focused tests**
 
-Run: `pytest tests/test_retrieval.py -q`  
+Run: `pytest tests/test_retrieval.py -q`
 Expected: PASS.
 
 - [ ] **Step 4: Run lint and commit**
@@ -132,7 +132,7 @@ def test_tutor_routes_broad_question_to_document_overview():
     assert response.sources[0].page == 10
 ```
 
-Run: `pytest tests/test_tutor.py -q`  
+Run: `pytest tests/test_tutor.py -q`
 Expected: FAIL because the tutor always uses focused retrieval.
 
 - [ ] **Step 2: Implement overview routing**
@@ -145,7 +145,7 @@ questions.
 
 - [ ] **Step 3: Run focused tests**
 
-Run: `pytest tests/test_tutor.py -q`  
+Run: `pytest tests/test_tutor.py -q`
 Expected: PASS.
 
 - [ ] **Step 4: Run lint and commit**

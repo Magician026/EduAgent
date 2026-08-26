@@ -18,6 +18,7 @@ SUMMARY_HEADING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 OVERVIEW_CHUNK_LIMIT = 32
+OVERVIEW_STRUCTURAL_CHUNK_LIMIT = OVERVIEW_CHUNK_LIMIT // 2
 
 
 class Retriever:
@@ -55,7 +56,7 @@ class Retriever:
 
         def add_matching(matches) -> None:
             for chunk in ordered_chunks:
-                if len(selected) == OVERVIEW_CHUNK_LIMIT:
+                if len(selected) == OVERVIEW_STRUCTURAL_CHUNK_LIMIT:
                     return
                 if chunk.chunk_id not in selected_ids and matches(chunk.text):
                     selected.append(chunk)

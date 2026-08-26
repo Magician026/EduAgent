@@ -32,12 +32,31 @@ class FakeVectorStore:
         return self.results[:k]
 
 
-def test_document_overview_intent_detects_broad_question():
-    assert is_document_overview_query("帮我介绍一下这个pdf讲了什么内容") is True
+@pytest.mark.parametrize(
+    "query",
+    [
+        "帮我介绍一下这个pdf讲了什么内容",
+        "帮我总结一下这个 PDF",
+        "Summarize this PDF",
+        "Give me an overview of this document",
+    ],
+)
+def test_document_overview_intent_detects_broad_document_questions(query):
+    assert is_document_overview_query(query) is True
 
 
-def test_document_overview_intent_keeps_focused_question_on_normal_path():
-    assert is_document_overview_query("什么是 XGBoost？") is False
+@pytest.mark.parametrize(
+    "query",
+    [
+        "什么是 XGBoost？",
+        "介绍一下 XGBoost",
+        "第三章讲了什么？",
+        "Summarize XGBoost",
+        "What does chapter 3 cover?",
+    ],
+)
+def test_document_overview_intent_keeps_focused_questions_on_normal_path(query):
+    assert is_document_overview_query(query) is False
 
 
 def test_document_overview_retrieval_spreads_evidence_across_document():
@@ -123,6 +142,32 @@ def test_document_overview_retrieval_ignores_chapter_mentions_in_body_text():
     results = retriever.retrieve_document_overview()
 
     assert max(result.chunk.page for result in results) == 100
+
+
+def test_document_overview_retrieval_reserves_late_pages_when_structure_saturates():
+    class FakeOverviewVectorStore:
+        def all_chunks(self):
+            return [
+                DocumentChunk(
+                    document_name="book.pdf",
+                    document_hash="hash",
+                    page=page,
+                    chunk_id=f"chunk-{page}",
+                    text=f"Contents Chapter {page}",
+                )
+                for page in range(1, 101)
+            ]
+
+    retriever = Retriever(
+        embedding_provider=FakeEmbeddings(),
+        vector_store=FakeOverviewVectorStore(),
+    )
+
+    results = retriever.retrieve_document_overview()
+
+    pages = {result.chunk.page for result in results}
+    assert 100 in pages
+    assert any(page > 75 for page in pages)
 
 
 def test_retriever_returns_metadata_and_excerpt():

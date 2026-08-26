@@ -63,8 +63,10 @@ class _Ingestion:
     def __init__(self, events):
         self.events = events
 
-    def ingest(self, file_name, pdf_bytes):
+    def ingest(self, file_name, pdf_bytes, progress_callback=None):
         self.events.append(("ingest", file_name))
+        if progress_callback is not None:
+            progress_callback(1, 1)
         return IngestionResult(
             status="indexed",
             document_hash="hash",
@@ -102,6 +104,10 @@ def test_course_materials_shows_live_status_before_indexing_call(monkeypatch):
     event_names = [event[0] for event in events]
     assert event_names.index("status_start") < event_names.index("ingest")
     assert event_names.index("status_write") < event_names.index("ingest")
+    assert any(
+        event[0] == "status_write" and event[1] == "Embedding chunks: 1/1"
+        for event in events
+    )
     assert any(
         event[0] == "status_update" and event[1]["state"] == "complete"
         for event in events

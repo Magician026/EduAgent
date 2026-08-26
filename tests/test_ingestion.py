@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
+from eduagent import document_processing
 from eduagent.document_processing.ingestion import IngestionService
+from eduagent.models import DocumentChunk, PageText
 
 
 @dataclass
@@ -65,3 +67,56 @@ def test_ingestion_skips_duplicate_content(sample_pdf_bytes):
     assert second.status == "duplicate"
     assert embeddings.calls == 1
     assert len(repository.documents) == 1
+
+
+def test_ingestion_batches_embeddings_and_reports_progress(monkeypatch):
+    pages = [
+        PageText(
+            document_name="lesson.pdf",
+            document_hash="hash",
+            page=1,
+            text="lesson",
+        )
+    ]
+    chunks = [
+        DocumentChunk(
+            document_name="lesson.pdf",
+            document_hash="hash",
+            page=1,
+            chunk_id=f"chunk-{index}",
+            text=f"chunk {index}",
+        )
+        for index in range(5)
+    ]
+
+    monkeypatch.setattr(document_processing.ingestion, "parse_pdf", lambda *_: pages)
+    monkeypatch.setattr(document_processing.ingestion, "chunk_pages", lambda *_: chunks)
+
+    class RecordingEmbeddings:
+        def __init__(self):
+            self.calls = []
+
+        def embed(self, texts):
+            self.calls.append(list(texts))
+            return [[1.0, 0.0] for _ in texts]
+
+    embeddings = RecordingEmbeddings()
+    vector_store = FakeVectorStore()
+    repository = FakeRepository()
+    service = IngestionService(
+        embeddings,
+        vector_store,
+        repository,
+        embedding_batch_size=2,
+    )
+    progress = []
+
+    result = service.ingest(
+        "lesson.pdf",
+        b"pdf",
+        progress_callback=lambda completed, total: progress.append((completed, total)),
+    )
+
+    assert result.status == "indexed"
+    assert [len(call) for call in embeddings.calls] == [2, 2, 1]
+    assert progress == [(2, 5), (4, 5), (5, 5)]

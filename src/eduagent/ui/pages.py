@@ -93,11 +93,16 @@ def render_course_materials(services: AppServices) -> None:
                     indexing_status.write(
                         f"Processing {file_number}/{len(uploaded_files)}: {uploaded_file.name}"
                     )
+
+                    def update_embedding_progress(completed: int, total: int) -> None:
+                        indexing_status.write(f"Embedding chunks: {completed}/{total}")
+
                     try:
                         with st.spinner(f"Generating embeddings for {uploaded_file.name}…"):
                             result = services.ingestion.ingest(
                                 uploaded_file.name,
                                 uploaded_file.getvalue(),
+                                progress_callback=update_embedding_progress,
                             )
                         if result.status == "duplicate":
                             duplicate_count += 1

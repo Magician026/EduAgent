@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Protocol
 
 from eduagent.document_processing.chunker import chunk_pages
@@ -43,12 +43,21 @@ class IngestionService:
         embedding_service: EmbeddingService,
         vector_store: VectorStorage,
         repository: DocumentRepository,
+        embedding_batch_size: int = 32,
     ) -> None:
+        if embedding_batch_size < 1:
+            raise ValueError("embedding_batch_size must be at least 1")
         self.embedding_service = embedding_service
         self.vector_store = vector_store
         self.repository = repository
+        self.embedding_batch_size = embedding_batch_size
 
-    def ingest(self, file_name: str, pdf_bytes: bytes) -> IngestionResult:
+    def ingest(
+        self,
+        file_name: str,
+        pdf_bytes: bytes,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> IngestionResult:
         """Index a PDF or return a duplicate result for previously indexed content."""
 
         document_hash = hashlib.sha256(pdf_bytes).hexdigest()
@@ -65,9 +74,15 @@ class IngestionService:
         chunks = chunk_pages(pages)
         if not chunks:
             raise ValueError("The PDF produced no usable chunks.")
-        embeddings = self.embedding_service.embed([chunk.text for chunk in chunks])
-        if len(embeddings) != len(chunks):
-            raise ValueError("The embedding provider returned an unexpected vector count.")
+        embeddings: list[list[float]] = []
+        for start in range(0, len(chunks), self.embedding_batch_size):
+            batch = chunks[start : start + self.embedding_batch_size]
+            batch_embeddings = self.embedding_service.embed([chunk.text for chunk in batch])
+            if len(batch_embeddings) != len(batch):
+                raise ValueError("The embedding provider returned an unexpected vector count.")
+            embeddings.extend(batch_embeddings)
+            if progress_callback is not None:
+                progress_callback(min(start + len(batch), len(chunks)), len(chunks))
         self.vector_store.add(chunks, embeddings)
         self.repository.register_document(
             file_name,

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import pytest
 import fitz
+import pytest
 
 
 @pytest.fixture()

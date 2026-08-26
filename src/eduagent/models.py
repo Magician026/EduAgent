@@ -3,29 +3,29 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class ExplanationLevel(str, Enum):
+class ExplanationLevel(StrEnum):
     BEGINNER = "Beginner"
     STANDARD = "Standard"
     ADVANCED = "Advanced"
 
 
-class QuestionType(str, Enum):
+class QuestionType(StrEnum):
     MULTIPLE_CHOICE = "multiple_choice"
     SHORT_ANSWER = "short_answer"
 
 
-class Difficulty(str, Enum):
+class Difficulty(StrEnum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
 
 
-class TeachingAction(str, Enum):
+class TeachingAction(StrEnum):
     EXPLAIN = "EXPLAIN"
     GIVE_EXAMPLE = "GIVE_EXAMPLE"
     ASK_DIAGNOSTIC_QUESTION = "ASK_DIAGNOSTIC_QUESTION"

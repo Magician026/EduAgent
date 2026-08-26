@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -67,7 +68,7 @@ class Settings:
         cls,
         env: Mapping[str, str] | None = None,
         secrets: Mapping[str, Any] | None = None,
-    ) -> "Settings":
+    ) -> Settings:
         """Build settings from environment variables and optional Streamlit secrets."""
 
         load_dotenv(override=False)
@@ -89,7 +90,9 @@ class Settings:
             chroma_path=runtime_dir / "chroma",
             openai_api_key=_source_value("OPENAI_API_KEY", values, secrets),
             openai_base_url=_source_value("OPENAI_BASE_URL", values, secrets),
-            openai_model=_source_value("OPENAI_MODEL", values, secrets, "gpt-4o-mini") or "gpt-4o-mini",
+            openai_model=(
+                _source_value("OPENAI_MODEL", values, secrets, "gpt-4o-mini") or "gpt-4o-mini"
+            ),
             embedding_model=(
                 _source_value(
                     "OPENAI_EMBEDDING_MODEL", values, secrets, "text-embedding-3-small"

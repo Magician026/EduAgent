@@ -16,7 +16,11 @@ class EmbeddingService(Protocol):
 
 
 class VectorStorage(Protocol):
-    def add(self, chunks: Sequence[DocumentChunk], embeddings: Sequence[Sequence[float]]) -> None: ...
+    def add(
+        self,
+        chunks: Sequence[DocumentChunk],
+        embeddings: Sequence[Sequence[float]],
+    ) -> None: ...
 
 
 class DocumentRepository(Protocol):

@@ -82,22 +82,60 @@ def render_course_materials(services: AppServices) -> None:
         if services.ingestion is None:
             _model_ready_or_explain(services)
         else:
-            for uploaded_file in uploaded_files:
-                try:
-                    result = services.ingestion.ingest(
-                        uploaded_file.name,
-                        uploaded_file.getvalue(),
+            indexed_count = 0
+            duplicate_count = 0
+            failed_count = 0
+            with st.status(
+                f"Indexing {len(uploaded_files)} PDF(s)…",
+                expanded=True,
+            ) as indexing_status:
+                for file_number, uploaded_file in enumerate(uploaded_files, start=1):
+                    indexing_status.write(
+                        f"Processing {file_number}/{len(uploaded_files)}: {uploaded_file.name}"
                     )
-                    if result.status == "duplicate":
-                        st.info(result.message)
-                    else:
-                        st.success(result.message)
-                except DocumentProcessingError as exc:
-                    st.error(f"{uploaded_file.name}: {exc}")
-                except ProviderError as exc:
-                    st.error(f"{uploaded_file.name}: model service unavailable — {exc}")
-                except ValueError as exc:
-                    st.error(f"{uploaded_file.name}: {exc}")
+                    try:
+                        with st.spinner(f"Generating embeddings for {uploaded_file.name}…"):
+                            result = services.ingestion.ingest(
+                                uploaded_file.name,
+                                uploaded_file.getvalue(),
+                            )
+                        if result.status == "duplicate":
+                            duplicate_count += 1
+                            st.info(result.message)
+                        else:
+                            indexed_count += 1
+                            st.success(result.message)
+                    except DocumentProcessingError as exc:
+                        failed_count += 1
+                        st.error(f"{uploaded_file.name}: {exc}")
+                    except ProviderError as exc:
+                        failed_count += 1
+                        st.error(f"{uploaded_file.name}: model service unavailable — {exc}")
+                    except ValueError as exc:
+                        failed_count += 1
+                        st.error(f"{uploaded_file.name}: {exc}")
+                    except Exception as exc:
+                        failed_count += 1
+                        st.error(f"{uploaded_file.name}: indexing failed — {exc}")
+
+                if failed_count:
+                    indexing_status.update(
+                        label=(
+                            f"Indexing finished with {failed_count} error(s): "
+                            f"{indexed_count} indexed, {duplicate_count} already indexed."
+                        ),
+                        state="error",
+                        expanded=True,
+                    )
+                else:
+                    indexing_status.update(
+                        label=(
+                            f"Indexing complete: {indexed_count} indexed, "
+                            f"{duplicate_count} already indexed."
+                        ),
+                        state="complete",
+                        expanded=False,
+                    )
 
     documents = services.repository.list_documents()
     st.subheader("Indexed files")

@@ -1,1 +1,16 @@
 .worktrees/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
+data/runtime/*
+!data/runtime/.gitkeep
+*.db
+*.sqlite
+*.sqlite3

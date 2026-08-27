@@ -40,6 +40,10 @@ class FakeVectorStore:
         "Summarize this PDF",
         "Give me an overview of this document",
         "What is this document about?",
+        "帮我总结一下这本书有哪些章节",
+        "这本书主要讲了什么",
+        "What is this book about?",
+        "What chapters does this book contain?",
     ],
 )
 def test_document_overview_intent_detects_broad_document_questions(query):
@@ -57,6 +61,8 @@ def test_document_overview_intent_detects_broad_document_questions(query):
         "介绍一下本文中的 XGBoost",
         "总结一下这篇文章的实验部分",
         "Summarize this document's section on XGBoost",
+        "总结一下本书的实验部分",
+        "Summarize this book's section on XGBoost",
     ],
 )
 def test_document_overview_intent_keeps_focused_questions_on_normal_path(query):

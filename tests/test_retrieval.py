@@ -44,6 +44,8 @@ class FakeVectorStore:
         "这本书主要讲了什么",
         "What is this book about?",
         "What chapters does this book contain?",
+        "这本书分为哪些章节？",
+        "List the chapters in this book.",
     ],
 )
 def test_document_overview_intent_detects_broad_document_questions(query):
@@ -63,6 +65,9 @@ def test_document_overview_intent_detects_broad_document_questions(query):
         "Summarize this document's section on XGBoost",
         "总结一下本书的实验部分",
         "Summarize this book's section on XGBoost",
+        "总结一下这本书关于 XGBoost 的内容",
+        "Summarize XGBoost in this book.",
+        "Summarize section 2 of this book.",
     ],
 )
 def test_document_overview_intent_keeps_focused_questions_on_normal_path(query):

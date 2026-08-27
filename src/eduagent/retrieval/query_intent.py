@@ -37,8 +37,13 @@ OVERVIEW_REQUESTS = (
     "概述",
     "有哪些章节",
     "章节有哪些",
+    "分为哪些章节",
+    "章节列表",
     "what chapters",
     "which chapters",
+    "what are the chapters",
+    "list the chapters",
+    "chapters in",
     "chapter list",
     "summary",
     "summarize",
@@ -54,10 +59,15 @@ FOCUSED_CHAPTER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 FOCUSED_TOPIC_OR_SECTION_PATTERN = re.compile(
-    r"(?:本文|这篇文章|这个文档|这份文档|本书|这本书)\s*(?:中的|的)\s*"
+    r"(?:本文|这篇文章|这个文档|这份文档|本书|这本书)\s*(?:中的|的|关于)\s*"
     r"(?!主要内容|整体内容|核心内容|主题|概述|摘要|结论|章节|章节结构|哪些章节)\S+"
     r"|(?:this document|the document|this pdf|the pdf|this book|the book)(?:'s)?\s+"
-    r"(?:section|part|chapter|topic)\s+(?:\d+|[ivxlcdm]+|on|about|covering|for|of)\b",
+    r"(?:section|part|chapter|topic)\s+(?:\d+|[ivxlcdm]+|on|about|covering|for|of)\b"
+    r"|\b(?:summarize|explain|describe|discuss|tell me about)\s+"
+    r"(?!the\s+chapters?\b|the\s+contents?\b).+?\s+"
+    r"(?:in|from|within)\s+(?:this|the)\s+(?:book|document|pdf)\b"
+    r"|\b(?:section|part|chapter|topic)\s+(?:\d+|[ivxlcdm]+)\s+of\s+"
+    r"(?:this|the)\s+(?:book|document|pdf)\b",
     re.IGNORECASE,
 )
 
